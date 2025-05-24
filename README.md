@@ -31,11 +31,20 @@ API REST desenvolvida em C# com ASP.NET Core para gerenciar equipamentos de acad
 
  Funcionalidades Principais:
   Modelos: Equipamento (Nome, Preço, Data Compra, Data Revisão, Grupo Muscular) e ManutencaoEquipamento.    
+
+
   Endpoints CRUD para Equipamentos:
+
+
   GET, POST, PUT, DELETE em /api/equipamentos
+
+
   Endpoints de Manutenção:
   POST /api/equipamentos/{id}/manutencoes (Registrar manutenção)
   GET /api/equipamentos/necessita-manutencao (Listar equipamentos que precisam de manutenção - regra de 3 meses)
+
+
+
   Dados Iniciais: 10 equipamentos pré-cadastrados via HasData no DbContext.
 
 

@@ -57,4 +57,4 @@ API REST desenvolvida em C# com ASP.NET Core para gerenciar equipamentos de acad
   No terminal, na raiz do projeto:
   dotnet ef database update (cria o BD e aplica dados iniciais)
   dotnet run (inicia a API)
-  Acesse o Swagger: http://localhost:<porta>/swagger
+  Acesse o Swagger: http://localhost:5066/swagger

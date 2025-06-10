@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Equipamentos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .actions button {
+            margin-right: 5px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .edit-btn { background-color: #ffc107; color: #fff; }
+        .delete-btn { background-color: #dc3545; color: #fff; }
+
+        form {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        form div {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], input[type="date"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+        #add-new-btn {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Gerenciamento de Equipamentos da Academia</h1>
+
+        <button id="add-new-btn" class="btn">Adicionar Novo Equipamento</button>
+
+        <div id="form-container" style="display: none;">
+            <h2 id="form-title">Adicionar Equipamento</h2>
+            <form id="equipamento-form">
+                <input type="hidden" id="equipamentoId">
+                <div>
+                    <label for="nome">Nome do Equipamento:</label>
+                    <input type="text" id="nome" required>
+                </div>
+                <div>
+                    <label for="preco">Preço:</label>
+                    <input type="number" id="preco" required>
+                </div>
+                <div>
+                    <label for="dataCompra">Data da Compra:</label>
+                    <input type="date" id="dataCompra" required>
+                </div>
+                <div>
+                    <label for="dataRevisao">Data da Próxima Revisão:</label>
+                    <input type="date" id="dataRevisao" required>
+                </div>
+                <div>
+                    <label for="grupoMuscularPrincipal">Grupo Muscular Principal:</label>
+                    <input type="text" id="grupoMuscularPrincipal" required>
+                </div>
+                <div>
+                    <label for="descricao">Descrição (Opcional):</label>
+                    <textarea id="descricao" rows="3"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                    <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <h2>Lista de Equipamentos</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Preço</th>
+                    <th>Data da Compra</th>
+                    <th>Grupo Muscular</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="equipamentos-table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        const API_URL = 'https://localhost:5066/api/equipamento';
+
+        const form = document.getElementById('equipamento-form');
+        const formContainer = document.getElementById('form-container');
+        const formTitle = document.getElementById('form-title');
+        const tableBody = document.getElementById('equipamentos-table-body');
+        const addNewBtn = document.getElementById('add-new-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+
+        // Função para mostrar o formulário
+        const showForm = (isEdit = false, equipamento = null) => {
+            form.reset();
+            document.getElementById('equipamentoId').value = '';
+            if (isEdit && equipamento) {
+                formTitle.textContent = 'Editar Equipamento';
+                document.getElementById('equipamentoId').value = equipamento.id;
+                document.getElementById('nome').value = equipamento.nome;
+                document.getElementById('preco').value = equipamento.preco;
+                // Formata a data para o formato YYYY-MM-DD que o input[type=date] espera
+                document.getElementById('dataCompra').value = equipamento.dataCompra.split('T')[0];
+                document.getElementById('dataRevisao').value = equipamento.dataRevisao.split('T')[0];
+                document.getElementById('grupoMuscularPrincipal').value = equipamento.grupoMuscularPrincipal;
+                document.getElementById('descricao').value = equipamento.descricao || '';
+            } else {
+                formTitle.textContent = 'Adicionar Equipamento';
+            }
+            formContainer.style.display = 'block';
+        };
+
+        // Função para esconder o formulário
+        const hideForm = () => {
+            formContainer.style.display = 'none';
+            form.reset();
+        };
+
+        // Event Listeners para os botões de controle do formulário
+        addNewBtn.addEventListener('click', () => showForm());
+        cancelBtn.addEventListener('click', hideForm);
+
+        // Função para buscar e exibir os equipamentos
+        async function getEquipamentos() {
+            try {
+                const response = await fetch(`${API_URL}/list`);
+                if (!response.ok) throw new Error('Erro ao buscar equipamentos.');
+
+                const equipamentos = await response.json();
+                tableBody.innerHTML = ''; // Limpa a tabela antes de preencher
+
+                equipamentos.forEach(equip => {
+                    const row = `
+                        <tr>
+                            <td>${equip.id}</td>
+                            <td>${equip.nome}</td>
+                            <td>R$ ${equip.preco}</td>
+                            <td>${new Date(equip.dataCompra).toLocaleDateString()}</td>
+                            <td>${equip.grupoMuscularPrincipal}</td>
+                            <td class="actions">
+                                <button class="edit-btn" onclick="handleEdit(${equip.id})">Editar</button>
+                                <button class="delete-btn" onclick="handleDelete(${equip.id})">Excluir</button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Falha:', error);
+                tableBody.innerHTML = `<tr><td colspan="6">Não foi possível carregar os dados. Verifique se a API está rodando.</td></tr>`;
+            }
+        }
+
+        // Lida com o envio do formulário (Criar ou Editar)
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const id = document.getElementById('equipamentoId').value;
+            const equipamentoData = {
+                id: id ? parseInt(id, 10) : 0,
+                nome: document.getElementById('nome').value,
+                preco: parseInt(document.getElementById('preco').value, 10),
+                dataCompra: document.getElementById('dataCompra').value,
+                dataRevisao: document.getElementById('dataRevisao').value,
+                grupoMuscularPrincipal: document.getElementById('grupoMuscularPrincipal').value,
+                descricao: document.getElementById('descricao').value,
+                manutencoes: [] // API espera uma lista, mesmo que vazia
+            };
+
+            const isEditing = !!id;
+            const url = isEditing ? `${API_URL}/edit/${id}` : `${API_URL}/create`;
+            const method = isEditing ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(equipamentoData)
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Erro ao salvar equipamento: ${errorText}`);
+                }
+
+                hideForm();
+                getEquipamentos(); // Atualiza a tabela
+            } catch (error) {
+                console.error('Falha:', error);
+                alert(`Não foi possível salvar. Detalhes: ${error.message}`);
+            }
+        });
+
+        // Função para preparar a edição de um equipamento
+        async function handleEdit(id) {
+            try {
+                const response = await fetch(`${API_URL}/findOne/${id}`);
+                if (!response.ok) throw new Error('Equipamento não encontrado.');
+
+                const equipamento = await response.json();
+                showForm(true, equipamento);
+            } catch (error) {
+                console.error('Falha ao buscar equipamento para edição:', error);
+                alert(error.message);
+            }
+        }
+
+        // Função para deletar um equipamento
+        async function handleDelete(id) {
+            if (!confirm(`Tem certeza que deseja excluir o equipamento com ID ${id}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/delete/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                     throw new Error('Erro ao excluir o equipamento.');
+                }
+
+                getEquipamentos(); // Atualiza a tabela
+            } catch(error) {
+                console.error('Falha ao deletar:', error);
+                alert(error.message);
+            }
+        }
+
+        // Carrega os dados iniciais quando a página é carregada
+        document.addEventListener('DOMContentLoaded', getEquipamentos);
+    </script>
+</body>
+</html>
